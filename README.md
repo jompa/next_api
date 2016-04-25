@@ -9,6 +9,8 @@ Working:
 - Rest login
 - Public Feed subscription to default values
 
+DO NOT USE THIS APP!
+
 ## Use
 
     iex> NextApi.Users.login "user_name", "password"
