@@ -27,7 +27,7 @@ Create your account at Nordnet and download the NEXTAPI_TEST_public.pem and put 
   1. Add next_api to your list of dependencies in `mix.exs`:
 
         def deps do
-          [{:next_api, "~> 0.0.1"}]
+          [{:next_api, git: "git@github.com:jompa/next_api.git"}]
         end
 
   2. Ensure next_api is started before your application:
