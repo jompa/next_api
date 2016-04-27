@@ -32,7 +32,7 @@ defmodule NextApi.Feed.Public do
   def handle_info({:ssl, socket, msg}, state) do
     # Get client event manager
     :ssl.setopts(socket, active: :once)
-    send state.controlling_pid, {:subscribtion, %{state.user_name => msg}}
+    send state.controlling_pid, {:subscribtion, {state.user_name, msg}}
     {:noreply, state}
   end
 
