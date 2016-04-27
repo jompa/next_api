@@ -67,7 +67,7 @@ defmodule NextApi.Users do
     case state.users do
       %{^user_name => %NextApi.User{session: session, feed: nil}} ->
         # user found but no feed
-        case  NextApi.Feed.Supervisor.start_feed state.feed_supervisor, session, pid, %{} do
+        case  NextApi.Feed.Supervisor.start_feed state.feed_supervisor, user_name, session, pid, %{} do
           {:ok, feed} ->
             user = %NextApi.User{session: session, feed: feed}
             state = %{state | users: Map.put(state.users, user_name, user)}

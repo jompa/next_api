@@ -1,16 +1,16 @@
 defmodule NextApi.Feed.Public do
   use GenServer
 
-  @initial_state %{controlling_pid: nil, session: nil, socket: nil}
+  @initial_state %{user_name: nil, session: nil, controlling_pid: nil, socket: nil}
 
-  def start_link([session, pid, feed_args], opts \\ []) do
+  def start_link([user_name, session, pid, feed_args], opts \\ []) do
     IO.puts "start_link"
     IO.inspect pid
-    GenServer.start_link(__MODULE__, {session, pid, feed_args, @initial_state}, opts)
+    GenServer.start_link(__MODULE__, {user_name, session, pid, feed_args, @initial_state}, opts)
   end
 
-  def init({session, pid, _feed_args, state}) do
-    state = %{state | session: session, controlling_pid: pid}
+  def init({user_name, session, pid, _feed_args, state}) do
+    state = %{state | user_name: user_name, session: session, controlling_pid: pid}
     IO.puts "init feed"
     case open_socket(state) do
       {:ok, socket} ->
@@ -32,7 +32,7 @@ defmodule NextApi.Feed.Public do
   def handle_info({:ssl, socket, msg}, state) do
     # Get client event manager
     :ssl.setopts(socket, active: :once)
-    send state.controlling_pid, {:subscribtion, msg}
+    send state.controlling_pid, {:subscribtion, %{state.user_name => msg}}
     {:noreply, state}
   end
 

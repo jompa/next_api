@@ -6,9 +6,9 @@ defmodule NextApi.Feed.Supervisor do
     Supervisor.start_link(__MODULE__, :ok, opts)
   end
 
-  def start_feed(supervisor, session, pid, feed_args) do
+  def start_feed(supervisor, user_name, session, pid, feed_args) do
     IO.puts "start feed"
-    Supervisor.start_child(supervisor, [[session, pid, feed_args], []])
+    Supervisor.start_child(supervisor, [[user_name, session, pid, feed_args], []])
   end
 
   def terminate(supervisor, feed_pid) do
