@@ -1,6 +1,5 @@
-# NnNext
+# Nordnet NextApi
 
-**TODO: Add description**
 ## Description
 
 WIP Wrapper around the [Nordnet nExt API](https://api.test.nordnet.se/). 
