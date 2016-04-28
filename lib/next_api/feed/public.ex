@@ -1,22 +1,35 @@
 defmodule NextApi.Feed.Public do
   use GenServer
 
-  @initial_state %{user_name: nil, session: nil, controlling_pid: nil, socket: nil}
+  @initial_state %{user_name: nil, session_key: nil, public_feed: nil, type: nil, instrument: nil, market: nil, controlling_pid: nil, socket: nil}
 
-  def start_link([user_name, session, pid, feed_args], opts \\ []) do
+  def start_link([user_name, session, pid, params], opts \\ []) do
     IO.puts "start_link"
     IO.inspect pid
-    GenServer.start_link(__MODULE__, {user_name, session, pid, feed_args, @initial_state}, opts)
+    GenServer.start_link(__MODULE__, {user_name, session, pid, params, @initial_state}, opts)
   end
 
-  def init({user_name, session, pid, _feed_args, state}) do
-    state = %{state | user_name: user_name, session: session, controlling_pid: pid}
-    IO.puts "init feed"
+  def init({user_name, %{"session_key" => session_key, "public_feed" => public_feed}, pid, params, state}) do
+    %{type: type, instrument: instrument, market: market} = params
+
+    state = %{state |
+      user_name: user_name,
+      session_key: session_key,
+      public_feed: public_feed,
+      controlling_pid: pid,
+      type: type,
+      instrument: instrument,
+      market: market
+    }
+
+    IO.puts "init feed with type:#{type}, market:#{market}, instrument:#{instrument}"
+
     case open_socket(state) do
       {:ok, socket} ->
         :ssl.setopts(socket, active: :once)
-        {:ok, subscribe} = Poison.encode %{cmd: "subscribe", args: %{t: "price", i: 1869, m: 30}}
-        case :ssl.send(socket, subscribe) do
+        {:ok, subscribe} = Poison.encode %{cmd: "subscribe", args: %{t: type, i: instrument, m: market}}
+        IO.inspect subscribe
+        case :ssl.send(socket, subscribe <> "\n") do
           :ok ->
             state = %{state | socket: socket}
             {:ok, state}
@@ -32,7 +45,7 @@ defmodule NextApi.Feed.Public do
   def handle_info({:ssl, socket, msg}, state) do
     # Get client event manager
     :ssl.setopts(socket, active: :once)
-    send state.controlling_pid, {:subscribtion, {state.user_name, msg}}
+    send state.controlling_pid, {:subscribtion, {state.user_name, Poison.decode! msg}}
     {:noreply, state}
   end
 
@@ -52,15 +65,14 @@ defmodule NextApi.Feed.Public do
   # helpers
   defp open_socket(state) do
     unless is_port(state.socket) do
-      %{"session_key" => session_key, "public_feed" => public_feed } = state.session
 
       opts = [:binary, active: false, packet: :line]
 
-      {:ok, socket} = :ssl.connect(to_char_list(public_feed["hostname"]), public_feed["port"], opts)
+      {:ok, socket} = :ssl.connect(to_char_list(state.public_feed["hostname"]), state.public_feed["port"], opts)
       :ok = :ssl.ssl_accept(socket)
 
       ## format login call
-      {:ok, login} = Poison.encode %{cmd: "login", args: %{session_key: session_key, service: "NEXTAPI"}}
+      {:ok, login} = Poison.encode %{cmd: "login", args: %{session_key: state.session_key, service: "NEXTAPI"}}
 
       case :ssl.send(socket, login <> "\n") do
         :ok ->
