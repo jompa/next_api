@@ -15,12 +15,12 @@ defmodule NextApi.Users do
   end
 
   # Public
-  def login(user, pass) do
-    GenServer.call(__MODULE__, {:login, user, pass})
+  def login(user_name, pass) do
+    GenServer.call(__MODULE__, {:login, user_name, pass})
   end
 
-  def logout() do
-    GenServer.call(__MODULE__, :logout)
+  def logout(user_name) do
+    GenServer.call(__MODULE__, {:logout, user_name})
   end
 
   def subscribe_public(user_name, params) do
@@ -28,7 +28,8 @@ defmodule NextApi.Users do
   end
 
   # Private
-  def handle_call({:login, user_name, pass}, {pid, _ref}, state) do
+  def handle_call({:login, user_name, pass}, {_pid, _ref}, state) do
+
     case NextApi.Rest.login user_name, pass do
       {:ok, session} ->
         user = %NextApi.User{session: session}
@@ -39,35 +40,35 @@ defmodule NextApi.Users do
     end
   end
 
-  #def handle_call({:logout, user_name}, {pid, _ref}, state) do
+  def handle_call({:logout, user_name}, {_pid, _ref}, state) do
 
-    #case state.users do
-      #%{^pid => %NextApi.User{session: _session, feed: nil}} ->
-        ## remove user
-        #{_, users} = Map.pop(state.users, pid)
-        #state = %{state | users: users}
-        #{:reply, {:error, "aye it's done"}, state}
+    case state.users do
+      %{^user_name => %NextApi.User{session: _session, feed: nil}} ->
+        # remove user
+        {_, users} = Map.pop(state.users, user_name)
+        state = %{state | users: users}
+        {:reply, {:error, "aye it's done"}, state}
 
-      #%{^pid => %NextApi.User{session: _session, feed: feed}} ->
-        ## remove user
-        #{_, users} = Map.pop(state.users, pid)
-        #state = %{state | users: users}
-        ## terminate feed
-        #NextApi.Feed.Supervisor.terminate state.feed_supervisor, feed
-        #{:reply, {:ok, "you are logged out"}, state}
+      %{^user_name => %NextApi.User{session: _session, feed: feed}} ->
+        # remove user
+        {_, users} = Map.pop(state.users, user_name)
+        state = %{state | users: users}
+        # terminate feed
+        NextApi.Feed.Supervisor.terminate state.feed_supervisor, feed
+        {:reply, {:ok, "you are logged out"}, state}
 
-      #_ ->
-        #{:reply, {:error, "you are not logged in"}, state}
-    #end
-  #end
+      _ ->
+        {:reply, {:error, "you are not logged in"}, state}
+    end
+  end
 
-  def handle_call({:subscribe_public, user_name, _params}, {pid, _ref}, state) do
+  def handle_call({:subscribe_public, user_name, params}, {pid, _ref}, state) do
 
     # find user in state
     case state.users do
       %{^user_name => %NextApi.User{session: session, feed: nil}} ->
         # user found but no feed
-        params = %{type: "price", instrument: "101", market: "30"}
+        #params = %{type: "price", instrument: 101, market: 30}
         case  NextApi.Feed.Supervisor.start_feed state.feed_supervisor, user_name, session, pid, params do
           {:ok, feed} ->
             user = %NextApi.User{session: session, feed: feed}

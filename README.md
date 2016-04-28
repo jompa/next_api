@@ -14,7 +14,7 @@ DO NOT USE THIS APP!
 
     iex> NextApi.Users.login "user_name", "password"
     :ok
-    iex> NextApi.Users.subscribe_public
+    iex> NextApi.Users.subscribe_public "user_name", %{type: "price", instrument: 101, market: 30}
     {:ok, "feeding"}
     iex> flush
     {:subscribtion, "{\"type\":\"heartbeat\",\"data\":{}}\n"}
