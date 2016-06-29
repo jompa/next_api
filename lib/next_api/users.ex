@@ -1,4 +1,11 @@
 defmodule NextApi.Users do
+  @moduledoc """
+  Stores user credentials and starts feeds
+
+  Example params to working feed
+  params = %{type: "price", instrument: "101", market: 11}
+  """
+
   use GenServer
 
   @initial_state %{users: %{}, feed_supervisor: nil}
@@ -68,7 +75,6 @@ defmodule NextApi.Users do
     case state.users do
       %{^user_name => %NextApi.User{session: session, feed: nil}} ->
         # user found but no feed
-        #params = %{type: "price", instrument: 101, market: 30}
         case  NextApi.Feed.Supervisor.start_feed state.feed_supervisor, user_name, session, pid, params do
           {:ok, feed} ->
             user = %NextApi.User{session: session, feed: feed}
